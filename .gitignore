@@ -1,0 +1,11 @@
+# ignore latex compile artifacts
+*.aux
+*.log
+*.bbl-SAVE-ERROR
+*.fdb_latexmk
+*.fls
+*.lof
+*.bbl
+*.bcf
+*.gz
+*.xml

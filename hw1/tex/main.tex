@@ -1,0 +1,252 @@
+\documentclass{article}
+
+% Formatting
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[titletoc,title]{appendix}
+
+\usepackage{amsmath,amsfonts,amssymb,mathtools}
+\usepackage{graphicx,float}
+\usepackage{booktabs}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algorithmic}
+\usepackage{biblatex}
+\usepackage{cleveref}
+\usepackage{indentfirst}
+\setlength{\parindent}{2em}
+
+\addbibresource{references.bib}
+
+\title{PRML Spring 2026 Homework 1}
+\author{Yifan Ding \\
+        \small Code: \url{https://github.com/your-username/PRML-Spring-2026-HW1} \\
+        \small Email: 23373493@buaa.edu.cn}
+\date{March 24, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+    Add your abstract here.
+\end{abstract}
+
+
+\section{Introduction}
+Regression analysis is a cornerstone of predictive modeling and statistical learning, widely applied in fields such as pattern recognition,
+ computer vision, and data mining.
+The core challenge of regression lies in finding a robust mapping from input features to continuous output values,
+where the choice of model and optimization algorithm directly impacts prediction accuracy and generalization ability.
+
+\subsection{Problem Statement}
+Given a set of 2D data: Data4Regression, where the first sheet is training data and the second sheet is testing data.
+\begin{enumerate}
+    \item Use least squares, gradient descent (GD), and Newton's method to perform linear fitting on the data,
+     and observe their training and testing errors.
+    \item If you find that the linear model does not fit well (the data is actually nonlinear,
+     so it is normal that the experimental results of the previous question are not good),
+      can you find a more suitable model to fit the given data?
+    Please give the reason for choosing the model, specific experimental results, and analysis of the results.
+\end{enumerate}
+
+\subsection{Problem Analysis}
+Firstly, let's take a look at the distribution of the data.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{figure/data_distribution.png}
+    \caption{Distribution of given training and testing data.}
+    \label{fig:distrubution}
+\end{figure}
+As shown in \Cref{fig:distrubution}, the data is not linearly distributed, so we can expect that the linear regression model will not work well.
+In such cases, we should consider using a nonlinear regression model to capture the underlying patterns in the data.
+
+Here are some potential nonlinear regression models that we can consider:
+\begin{itemize}
+    \item Polynomial Regression: This model fits a polynomial function to the data, allowing for more flexibility in capturing nonlinear relationships.
+    \item Support Vector Regression (SVR): This model uses a kernel function to map the input data into a higher-dimensional space, where a linear regression can be performed.
+    \item Decision Tree Regression: This model uses a tree-like structure to make predictions based on the input features, allowing for complex nonlinear relationships to be captured.
+    \item Neural Networks(NNs): Supported by Universal Approximation Theorem, neural networks with multiple layers of interconnected nodes can learn complex nonlinear relationships between the input features and the output values.
+        Training a neural network can be computationally expensive and may require a large amount of data.
+\end{itemize}
+
+Due to the limited amount of data(100 for train and 100 for test), we will focus on polynomial regression and support vector regression in our experiments.
+
+\subsection{Structure of the Paper}
+The rest of this paper is organized as follows: In \Cref{sec:methodology}, we will discuss the methodology used to evaluate the performance of different models, including the metrics and algorithms for linear regression. 
+In \Cref{sec:experiments}, we will present the experimental results of applying least squares, gradient descent, and Newton's method to the given data, and analyze the results. Finally, we will conclude the paper in \Cref{sec:conclusion}.
+
+\section{Methodology}
+\label{sec:methodology}
+\subsection{Metrics}
+\label{sec:metrics}
+To evaluate the performance of different models and algorithms, we can use two common metrics: root mean squared error (RMSE) and coefficient of determination ($R^2$).
+The RMSE is defined as:
+\begin{equation}
+    RMSE = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2},
+\end{equation}
+where $y_i$ is the true value and $\hat{y}_i$ is the predicted value.
+The RMSE measures the average squared difference between the true values and the predicted values,
+and a lower RMSE indicates a better fit of the model to the data.
+
+The coefficient of determination, denoted as $R^2$, is defined as:
+\begin{equation}
+    R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2},
+\end{equation}
+where $\bar{y}$ is the mean of the true values. The $R^2$ value ranges from 0 to 1, where a value closer to 1
+indicates that the model explains a larger proportion of the variance in the dependent variable.
+
+\subsection{Baseline Model: Linear Regression}
+Linear regression is a fundamental statistical method used to model the relationship between a dependent variable 
+and one or more independent variables. The goal of linear regression is to find the best-fitting line (or hyperplane in higher dimensions) 
+that minimizes the sum of squared differences between the observed values and the predicted values. 
+The linear regression model can be expressed as:
+\begin{equation}
+    y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \ldots + \beta_p x_p,
+\end{equation}
+where $y$ is the dependent variable, $x_1, x_2, \ldots, x_p$ are the independent variables, $\beta_0$ is the intercept,
+ $\beta_1, \beta_2, \ldots, \beta_p$ are the coefficients.
+
+Here we will discuss three optimal algorithms for fitting a linear regression model: least squares, gradient descent, and Newton's method.
+
+\subsubsection{Least Squares}
+The least squares method is a mathematical approach used to find the best-fitting line (or hyperplane in higher dimensions) in linear regression
+by minimizing the sum of squared differences between the observed values and the predicted values.
+Given a set of training data points $(x_i, y_i)$ for $i = 1, 2, \ldots, n$, the least squares method aims to find the coefficients $\beta_0, \beta_1, \ldots, \beta_p$ that minimize the cost function:
+\begin{equation}
+    J(\beta) = \sum_{i=1}^{n} (y_i - \hat{y}_i)^2,
+\end{equation}
+where $\hat{y}_i$ is the predicted value for the $i$-th data point, given by the linear model:
+\begin{equation}
+    \hat{y}_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \ldots + \beta_p x_{ip}.
+\end{equation}
+The least squares method can be solved analytically using the normal equation:
+\begin{equation}
+    \beta = (X^T X)^{-1} X^T y,
+\end{equation}
+where $X$ is the matrix of input features and $y$ is the vector of observed values.
+This method provides a closed-form solution for the coefficients, making it computationally efficient for small datasets.
+However, for larger datasets or when the number of features is high, it may be computationalally expensive due to the matrix inversion step,
+which has a time complexity of $O(n^3)$, where $n$ is the number of data points.
+
+
+\subsubsection{Gradient Descent}
+Gradient descent(GD) is an optimization algorithm used to minimize the cost function in machine learning models,
+ including linear regression.
+Given a loss function $J(\theta)$, where $\theta$ represents the parameters of the model,
+ the gradient descent algorithm iteratively updates the parameters in the direction of the negative gradient of the cost function with respect to the parameters. The update rule can be expressed as:
+\begin{equation}
+    \theta := \theta - \alpha \nabla J(\theta),
+\end{equation}
+where $\alpha$ is the learning rate, and $\nabla J(\theta)$ is the gradient of the cost function with respect to the parameters $\theta$.
+The key idea behind gradient descent is to take small steps in the direction of the steepest descent of the cost function,
+which helps to find the optimal parameters that minimize the cost function.
+
+Several variants of gradient descent, such as stochastic gradient descent (SGD) and mini-batch gradient descent(MBGD),
+have been developed to improve the efficiency of the algorithm.
+But the misuse of learning rate can lead to divergence or slow convergence.
+Techniques such as learning rate scheduling and momentum (e.g., Adam\cite{kingma2017adammethodstochasticoptimization}, AdamW\cite{loshchilov2019decoupledweightdecayregularization}) have been developed to address these issues and improve the performance of gradient descent.
+
+In the context of linear regression, the gradient of the cost function with respect to the parameters can be computed as:
+\begin{equation}
+    \nabla J(\theta) = \nabla(\frac{1}{n} ||\mathbf{y} - \mathbf{X}\theta||^2) = -\frac{2}{n} X^T (\mathbf{y} - \mathbf{X}\theta),
+\end{equation}
+where $\mathbf{X}$ is the matrix of input features, $\mathbf{y}$ is the vector of observed values, and $\theta$ is the vector of parameters.
+By iteratively updating the parameters using the gradient descent algorithm, we can find the optimal parameters that minimize the cost function and improve the fit of
+
+\subsubsection{Newton's Method}
+Newton's method is an optimization algorithm used to find the roots of a function or to minimize a cost function in machine learning models,
+including linear regression. 
+Given a cost function $J(\theta)$, the Newton's method updates the parameters using the second-order Taylor expansion:
+\begin{equation}
+    \theta := \theta - (\nabla^2 J(\theta))^{-1} \nabla J(\theta),
+\end{equation}
+where $\nabla J(\theta)$ is the gradient and $\nabla^2 J(\theta)$ is the Hessian matrix of the cost function.   
+
+
+\section{Experiments}
+\label{sec:experiments}
+\subsection{Baseline Model: Linear Regression}
+\begin{table}[H]
+    \centering
+    \caption{Performance of three optimal algorithms on fitting linear regression.}
+    \label{tab:results}
+    \begin{tabular}{lcccc}
+        \toprule
+        Algorithm & \multicolumn{2}{c}{Training} & \multicolumn{2}{c}{Testing} \\
+        \cmidrule(r){2-3} \cmidrule(l){4-5}
+        & RMSE & $R^2$ & RMSE & $R^2$ \\
+        \midrule
+        Least Squares & 0.7832001 & 0.1412699 & 0.7669251 & 0.14288 \\
+        Gradient Descent & 0.7832001 & 0.1412699 & 0.7669251 & 0.14288 \\
+        Newton's Method & 0.7832001 & 0.1412699 & 0.7669251 & 0.14288 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+As shown in \Cref{tab:results}, the performance of three algorithms (least squares, gradient descent, and Newton's method) using metrics defined in \Cref{sec:metrics}.
+ is nearly the same, 
+which is expected since they are all solving the same optimization problem for linear regression.
+However, the RMSE values are relatively high and the $R^2$ values are low, indicating that the linear regression model does not fit the data well.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{figure/linear_regression.png}
+    \caption{Linear regression fits on training and testing data.}
+    \label{fig:linear_regression}
+\end{figure}
+Illustrated in \Cref{fig:linear_regression}, the linear regression model fails to capture the nonlinear relationship between the input features and the output values,
+corresponding to the poor performance in metrics above.
+
+\subsection{model}
+
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+
+% \begin{enumerate}
+%     \item Fluffy swallowed a marble.
+%     \item I took Fluffy to the vet.
+%     \item They took an ultrasound of Fluffy's intestines.
+% \end{enumerate}
+
+% \begin{algorithm}
+% \begin{algorithmic}
+%     \STATE{Import data from \texttt{Testdata.mat}}
+%     \FOR{$j = 1:20$}
+%         \STATE{Extract measurement $j$ from \texttt{Undata}}
+%         \STATE{Do something useful}
+%     \ENDFOR
+%     \IF{$i\geq 5$} 
+%         \STATE{$i\gets i-1$}
+%     \ELSE
+%         \IF{$i\leq 3$}
+%             \STATE{$i\gets i+2$}
+%         \ENDIF
+%     \ENDIF 
+% \end{algorithmic}
+% \caption{Example Algorithm}
+% \label{alg:example}
+% \end{algorithm}
+
+% % Computational Results
+% \section{Conclusions}
+% Add your computational results here. See Table~\ref{tab:mascots} for how to include a table in your document. See Figure~\ref{fig:dubs} for how to include figures in your document.
+
+
+% begin{figure}[tb] % t = top, b = bottom, etc.
+
+
+% References
+\printbibliography
+
+% \begin{appendices}
+
+% \section{MATLAB Functions}
+% Add your important MATLAB functions here with a brief implementation explanation. This is how to make an \textbf{unordered} list:
+% \begin{itemize}
+%     \item \texttt{y = linspace(x1,x2,n)} returns a row vector of \texttt{n} evenly spaced points between \texttt{x1} and \texttt{x2}. 
+%     \item \texttt{[X,Y] = meshgrid(x,y)} returns 2-D grid coordinates based on the coordinates contained in the vectors \texttt{x} and \texttt{y}. \text{X} is a matrix where each row is a copy of \texttt{x}, and \texttt{Y} is a matrix where each column is a copy of \texttt{y}. The grid represented by the coordinates \texttt{X} and \texttt{Y} has \texttt{length(y)} rows and \texttt{length(x)} columns.  
+% \end{itemize}
+
+% \end{appendices}
+
+\end{document}
