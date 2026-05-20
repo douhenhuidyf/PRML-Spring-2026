@@ -24,5 +24,5 @@ python plot_metrics.py --inputs checkpoints/baseline/metrics.jsonl,checkpoints/n
 # Inference
 
 ```bash
-python inference.py --checkpoint checkpoints/baseline/best.pt --output_dir outputs/baseline
+python inference.py --checkpoint checkpoints/baseline/ckpt_step_600.pt --config checkpoints/baseline/config.json --text "这是一段测试文本，用于检测模型的中文到英文的翻译能力。" --max-new-tokens 128
 ```
