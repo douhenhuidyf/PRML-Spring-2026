@@ -1,0 +1,172 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[titletoc,title]{appendix}
+
+\usepackage{amsmath,amsfonts,amssymb,mathtools}
+\usepackage{graphicx,float}
+\usepackage{booktabs}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algorithmic}
+\usepackage{biblatex}
+\usepackage{cleveref}
+\usepackage{indentfirst}
+\setlength{\parindent}{2em}
+
+\addbibresource{references.bib}
+
+\title{PRML Spring 2026 Homework 4: Transformer Models}
+\author{Yifan Ding \\
+        \small Code: \url{https://github.com/douhenhuidyf/PRML-Spring-2026/tree/main/hw4} \\
+        \small Email: 23373493@buaa.edu.cn}
+\date{May 15, 2026}
+
+\begin{document}
+\maketitle
+
+% \begin{abstract}
+
+% \end{abstract}
+
+
+\section{Introduction}
+\subsection{Problem Statement}
+% 1）阅读并复现经典的17年文章： Attention is all you need!
+% https://arxiv.org/abs/1706.03762
+
+% （2）并尝试并通过实验来理解Transformer每个模块的必要性，可以通过实验来研究下面任何情况之一即可：
+
+% 2.1 位置编码： 如果用简单的绝对编码或者其他位置编码形式来对比原文中的方法，讨论位置编码的核心作用是什么？
+% 2.2 Q, K, V 的必要性： 如果我们只用Q与K （K, V合并为一个矩阵）对算法的影响是什么？
+% 2.3 如果模块中不采用ResNet的结构，对于算法的影响是什么？
+% 2.4 引入位置编码后用CNN重构一个网络，它与自注意力机制的Transformer比较
+% 2.5 经典Transformer的模块哪个方向可以做更多的改进？（不是直接引用其他已发布论文的改进方法） 提出独立想法并实践验证你的想法可行性。
+Read and reproduce the classic 2017 paper: "Attention is All You Need!"\cite{vaswani2023attentionneed}.
+Then, through experiments, try to understand the necessity of each module in the Transformer.
+You can choose to study any of the following situations:
+
+1. Positional Encoding: Compare the original method with simple absolute encoding or other forms of positional encoding, and discuss the core role of positional encoding.
+
+2. Necessity of Q, K, V: If we only use Q and K (merging K and V into one matrix), what is the impact on the algorithm?
+
+3. If the ResNet structure is not adopted in the module, what is the impact on the algorithm?
+
+4. After introducing positional encoding, reconstruct a network using CNN and compare it with the self-attention mechanism of the Transformer.
+
+5. Which direction can be improved in the classic Transformer module? (Not directly citing other published improvement methods) Propose independent ideas and practice to verify the feasibility of your ideas.
+
+\subsection{Problem Analysis}
+The Transformer model, introduced by Vaswani et al. in 2017, was originally designed for natural language processing tasks, especially machine translation.
+Thus, we will focus on the performance of the Transformer in translation tasks in this homework.
+As training a Transformer from scratch can be computationally expensive, we will use a smaller Chinese to English translation dataset and a smaller scale configuration for our experiments.
+
+\subsection{Structure of this paper}
+
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{Metrics}
+\label{sec:metrics}
+To evaluate the performance of the baseline Transformer model and its variants, we use two standard machine translation metrics: BLEU and chrF. Both are computed at the corpus level.
+\begin{itemize}
+        \item \textbf{BLEU} (Bilingual Evaluation Understudy) measures $n$-gram precision with a brevity penalty to discourage overly short translations. It is defined as:
+        \[
+        \text{BLEU} = \text{BP} \cdot \exp\left(\sum_{n=1}^{N} w_n \log p_n\right),
+        \]
+        where $p_n$ is the modified $n$-gram precision, $w_n$ is the weight (uniform in our experiments), and BP is the brevity penalty.
+
+        \item \textbf{chrF} measures character $n$-gram overlap using an F-score, which is more sensitive to morphological and subword differences. It is defined as:
+        \[
+        \text{chrF}_\beta = (1 + \beta^2) \cdot \frac{\text{Precision} \cdot \text{Recall}}{\beta^2 \cdot \text{Precision} + \text{Recall}},
+        \]
+        where precision and recall are computed over character $n$-grams, and we use $\beta = 2$ to emphasize recall.
+\end{itemize}
+
+\subsection{Variants of Transformer}
+We study three architectural variants to understand the role of residual paths,
+ normalization placement, and feed-forward networks.
+
+\subsubsection{No Residual Connections}
+We remove the residual connections in both the attention and feed-forward sublayers
+while keeping all other settings unchanged.
+This variant tests whether the shortcut paths are necessary for stable optimization and effective gradient flow in deep Transformer stacks.
+
+Theoretically, without residual connections, the model may struggle to learn identity mappings,
+ which can lead to vanishing gradients and hinder training convergence.
+ We will empirically verify this by comparing the training dynamics and final performance of this variant against the baseline Transformer.
+
+\subsubsection{Post-Norm Transformer}
+We compare the common pre-norm design with a post-norm setting which is the original design in the "Attention is All You Need!" paper.
+In the post-norm design, LayerNorm is applied after the residual connection, rather than before it as in the pre-norm design.
+This means that the output of each sublayer is normalized after adding the input (residual) to the output of the sublayer,
+rather than normalizing the sublayer output before adding the residual.
+The post-norm structure can lead to different training dynamics and stability properties compared to pre-norm, and we will empirically compare their performance on our translation task.
+The structure is illustrated in \Cref{fig:post_norm}.
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{figure/norm.png}
+        \caption{Pre-norm and post-norm structures for a Transformer sublayer.}
+        \label{fig:post_norm}
+\end{figure}
+
+\subsubsection{MoE with Linear Routing}
+We introduce a lightweight Mixture-of-Experts (MoE) layer in the feed-forward block.
+The router uses a simple linear projection to compute expert scores, and tokens are sent to top-$k$ experts without additional routing networks.
+
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\linewidth]{figure/moe.png}
+        \caption{MoE feed-forward block with a linear routing projection.}
+        \label{fig:moe}
+\end{figure}
+
+MoEs can increase model capacity without a proportional increase in computational cost, as only a subset of experts is activated for each token.
+We will evaluate whether this simple MoE design can improve translation performance compared to the standard feed-forward network in the Transformer.
+
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Implement Details}
+\label{sec:}
+
+
+\subsection{Dataset}
+\label{sec:dataset}
+We will use the translation2019zh\cite{} Chinese to English translation dataset, which contains around 5200k sentence pairs for training and 40k sentence pairs for validation.
+Here, we will use a tokenizer\cite{TiedemannThottingal:EAMT2020}to preprocess the dataset, and set the maximum sequence length to 192 for english sentences and 128 for chinese sentences.
+
+\subsection{Experiment Result}
+
+% baseline
+% {"step": 550, "train_loss": 4.196592330932617, "val_loss": 4.252671337127685, "bleu": 0.1953611175372819, "chrf": 11.247890586049508, "eval_samples": 640.0}
+
+% moe
+% {"step": 600, "train_loss": 3.998141288757324, "val_loss": 4.094677042961121, "bleu": 0.17129140284159575, "chrf": 10.514405598699277, "eval_samples": 320.0}
+
+% no residual
+% {"step": 550, "train_loss": 5.750664710998535, "val_loss": 5.730744075775147, "bleu": 0.0, "chrf": 0.0, "eval_samples": 640.0}
+
+% pre norm
+% {"step": 550, "train_loss": 4.002425193786621, "val_loss": 4.052163410186767, "bleu": 0.14378664132134752, "chrf": 10.831988199882087, "eval_samples": 640.0}
+
+
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+
+\printbibliography
+
+% \begin{appendices}
+
+% \section{MATLAB Functions}
+% Add your important MATLAB functions here with a brief implementation explanation. This is how to make an \textbf{unordered} list:
+% \begin{itemize}
+%     \item \texttt{y = linspace(x1,x2,n)} returns a row vector of \texttt{n} evenly spaced points between \texttt{x1} and \texttt{x2}.
+%     \item \texttt{[X,Y] = meshgrid(x,y)} returns 2-D grid coordinates based on the coordinates contained in the vectors \texttt{x} and \texttt{y}. \text{X} is a matrix where each row is a copy of \texttt{x}, and \texttt{Y} is a matrix where each column is a copy of \texttt{y}. The grid represented by the coordinates \texttt{X} and \texttt{Y} has \texttt{length(y)} rows and \texttt{length(x)} columns.
+% \end{itemize}
+
+% \end{appendices}
+
+\end{document}
